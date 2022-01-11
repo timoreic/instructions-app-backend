@@ -1,0 +1,129 @@
+package models
+
+import (
+	"context"
+	"database/sql"
+	"time"
+)
+
+type DBModel struct {
+	DB *sql.DB
+}
+
+// Get returns one instruction and error, if any
+func (m *DBModel) Get(id int) (*Instruction, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `select id, title, description, rating, created_at, updated_at from instructions where id = $1`
+
+	row := m.DB.QueryRowContext(ctx, query, id)
+
+	var instruction Instruction
+
+	err := row.Scan(
+		&instruction.ID,
+		&instruction.Title,
+		&instruction.Description,
+		&instruction.Rating,
+		&instruction.CreatedAt,
+		&instruction.UpdatedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Get categories, if any
+	query = `select
+					    ic.id, ic.instruction_id, ic.category_id, c.category_name
+					from 
+							instructions_categories ic
+							left join categories c on (c.id = ic.category_id)
+					where
+							ic.instruction_id = $1
+	`
+	rows, _ := m.DB.QueryContext(ctx, query, id)
+	defer rows.Close()
+
+	categories := make(map[int]string)
+	for rows.Next() {
+		var ic InstructionCategory
+		err := rows.Scan(
+			&ic.ID,
+			&ic.InstructionID,
+			&ic.CategoryID,
+			&ic.Category.CategoryName,
+		)
+		if err != nil {
+			return nil, err
+		}
+		categories[ic.ID] = ic.Category.CategoryName
+	}
+
+	instruction.InstructionCategory = categories
+
+	return &instruction, nil
+}
+
+// All returns all instructions and error, if any
+func (m *DBModel) All() ([]*Instruction, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `select id, title, description, rating, created_at, updated_at from instructions order by title`
+
+	rows, err := m.DB.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var instructions []*Instruction
+
+	for rows.Next() {
+		var instruction Instruction
+		err := rows.Scan(
+			&instruction.ID,
+			&instruction.Title,
+			&instruction.Description,
+			&instruction.Rating,
+			&instruction.CreatedAt,
+			&instruction.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		// Get categories, if any
+		categoryQuery := `select
+					    ic.id, ic.instruction_id, ic.category_id, c.category_name
+					from 
+							instructions_categories ic
+							left join categories c on (c.id = ic.category_id)
+					where
+							ic.instruction_id = $1
+	`
+		categoryRows, _ := m.DB.QueryContext(ctx, categoryQuery, instruction.ID)
+
+		categories := make(map[int]string)
+		for categoryRows.Next() {
+			var ic InstructionCategory
+			err := categoryRows.Scan(
+				&ic.ID,
+				&ic.InstructionID,
+				&ic.CategoryID,
+				&ic.Category.CategoryName,
+			)
+			if err != nil {
+				return nil, err
+			}
+			categories[ic.ID] = ic.Category.CategoryName
+		}
+		categoryRows.Close()
+
+		instruction.InstructionCategory = categories
+		instructions = append(instructions, &instruction)
+	}
+	return instructions, nil
+}

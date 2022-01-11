@@ -1,11 +1,9 @@
 package main
 
 import (
-	"backend/models"
 	"errors"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -20,21 +18,41 @@ func (app *application) getOneInstruction(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	app.logger.Println("ID is", id)
-
-	instruction := models.Instruction {
-		ID: id,
-		Title: "Some Instruction",
-		Description: "Some description",
-		Steps: []string{"Go", "Slices", "Are", "Powerful"},
-		Rating: 5,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
+	instruction, err := app.models.DB.Get(id)
 
 	err = app.writeJSON(w, http.StatusOK, instruction, "instruction")
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
 }
 
 func (app *application) getAllInstructions(w http.ResponseWriter, r *http.Request) {
-	
+	instructions, err := app.models.DB.All()
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusOK, instructions, "instructions")
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+}
+
+func (app *application) deleteInstruction(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (app *application) insertInstruction(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (app *application) updateInstruction(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (app *application) searchInstructions(w http.ResponseWriter, r *http.Request) {
+
 }

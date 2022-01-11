@@ -1,6 +1,7 @@
 package main
 
 import (
+	"backend/models"
 	"context"
 	"database/sql"
 	"flag"
@@ -17,21 +18,22 @@ const version = "1.0.0"
 
 type config struct {
 	port int
-	env string
-	db struct {
+	env  string
+	db   struct {
 		dsn string
 	}
 }
 
 type AppStatus struct {
-	Status string `json:"status"`
+	Status      string `json:"status"`
 	Environment string `json:"environment"`
-	Version string `json:"version"`
+	Version     string `json:"version"`
 }
 
 type application struct {
 	config config
 	logger *log.Logger
+	models models.Models
 }
 
 func main() {
@@ -53,14 +55,14 @@ func main() {
 	app := &application{
 		config: cfg,
 		logger: logger,
+		models: models.NewModels(db),
 	}
 
-
 	srv := &http.Server{
-		Addr: fmt.Sprintf(":%d", cfg.port),
-		Handler: app.routes(),
-		IdleTimeout: time.Minute,
-		ReadTimeout: 10 * time.Second,
+		Addr:         fmt.Sprintf(":%d", cfg.port),
+		Handler:      app.routes(),
+		IdleTimeout:  time.Minute,
+		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}
 
@@ -78,7 +80,7 @@ func openDB(cfg config) (*sql.DB, error) {
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(),5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	err = db.PingContext(ctx)
