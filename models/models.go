@@ -6,7 +6,7 @@ type Instruction struct {
 	ID int `json:"id"`
 	Title string `json:"title"`
 	Description string `json:"description"`
-	Steps []string `json:"steps"`
+	Steps []string `json:"-"`
 	Rating int `json:"rating"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
