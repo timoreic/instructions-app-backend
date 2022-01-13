@@ -46,6 +46,20 @@ func (app *application) getAllInstructions(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+func (app *application) getAllCategories(w http.ResponseWriter, r *http.Request) {
+	categories, err := app.models.DB.CategoriesAll()
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusOK, categories, "categories")
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+}
+
 func (app *application) deleteInstruction(w http.ResponseWriter, r *http.Request) {
 
 }

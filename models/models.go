@@ -31,7 +31,7 @@ type Instruction struct {
 
 // Category is the type for categories
 type Category struct {
-	ID           int       `json:"-"`
+	ID           int       `json:"id"`
 	CategoryName string    `json:"category_name"`
 	CreatedAt    time.Time `json:"-"`
 	UpdatedAt    time.Time `json:"-"`

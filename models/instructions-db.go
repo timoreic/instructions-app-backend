@@ -127,3 +127,35 @@ func (m *DBModel) All() ([]*Instruction, error) {
 	}
 	return instructions, nil
 }
+
+// CategoriesAll returns all categories and error, if any
+func (m *DBModel) CategoriesAll() ([]*Category, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `select id, category_name, created_at, updated_at from categories order by category_name`
+
+	rows, err := m.DB.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var categories []*Category
+
+	for rows.Next() {
+		var c Category
+		err := rows.Scan(
+			&c.ID,
+			&c.CategoryName,
+			&c.CreatedAt,
+			&c.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		categories = append(categories, &c)
+	}
+
+	return categories, nil
+}
