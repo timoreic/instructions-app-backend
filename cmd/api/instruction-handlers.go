@@ -8,6 +8,20 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+func (app *application) getAllInstructions(w http.ResponseWriter, r *http.Request) {
+	instructions, err := app.models.DB.All()
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusOK, instructions, "instructions")
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+}
+
 func (app *application) getOneInstruction(w http.ResponseWriter, r *http.Request) {
 	params := httprouter.ParamsFromContext(r.Context())
 
@@ -32,20 +46,6 @@ func (app *application) getOneInstruction(w http.ResponseWriter, r *http.Request
 	}
 }
 
-func (app *application) getAllInstructions(w http.ResponseWriter, r *http.Request) {
-	instructions, err := app.models.DB.All()
-	if err != nil {
-		app.errorJSON(w, err)
-		return
-	}
-
-	err = app.writeJSON(w, http.StatusOK, instructions, "instructions")
-	if err != nil {
-		app.errorJSON(w, err)
-		return
-	}
-}
-
 func (app *application) getAllCategories(w http.ResponseWriter, r *http.Request) {
 	categories, err := app.models.DB.CategoriesAll()
 	if err != nil {
@@ -54,6 +54,28 @@ func (app *application) getAllCategories(w http.ResponseWriter, r *http.Request)
 	}
 
 	err = app.writeJSON(w, http.StatusOK, categories, "categories")
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+}
+
+func (app *application) getAllInstructionsByCategory(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+
+	categoryID, err := strconv.Atoi(params.ByName("category_id"))
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	instructions, err := app.models.DB.All(categoryID)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusOK, instructions, "instructions")
 	if err != nil {
 		app.errorJSON(w, err)
 		return
