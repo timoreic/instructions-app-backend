@@ -19,6 +19,11 @@ func (app *application) getOneInstruction(w http.ResponseWriter, r *http.Request
 	}
 
 	instruction, err := app.models.DB.Get(id)
+	if err != nil {
+		app.logger.Println(errors.New("invalid id parameter"))
+		app.errorJSON(w, err)
+		return
+	}
 
 	err = app.writeJSON(w, http.StatusOK, instruction, "instruction")
 	if err != nil {
